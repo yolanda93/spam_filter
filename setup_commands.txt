@@ -1,5 +1,23 @@
-# Copy directories in the virtual machine
+
+--------------------------------_> Load files into HDFS
+
+# Step 1: Copy directories in the virtual machine
 scp -P 2222 -r spark_project root@localhost:~/spark_project/
+
+# Step 2: Login under hdfs user
+su hdfs
+
+# Step 3: Change permissions of the folder usr to give root access to read and write to the user directory
+hdfs dfs -chmod 777 /user
+exit
+
+# Step 4: Creates a directory directory
+hdfs dfs -mkdir /user/hadoop/ling-spam
+
+# Step 5: Copies single src file or multiple src files from local file system to the Hadoop Distributed File System
+hadoop fs -copyFromLocal ling-spam/* /user/hadoop/ling-spam
+
+---------------------------------_> Submit Spark App
 
 # Package a jar containing your application
 $ sbt package
