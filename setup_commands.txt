@@ -1,0 +1,8 @@
+# Copy directories in the virtual machine
+scp -P 2222 -r spark_project root@localhost:~/spark_project/
+
+# Package a jar containing your application
+$ sbt package
+
+# Use spark-submit to run your application
+$ YOUR_SPARK_HOME/bin/spark-submit \
