@@ -32,13 +32,10 @@ object spamFilter {
     probaDefault: Double // default value when a probability is missing
   ):RDD[(String, Double)] = {
   // Code to complete..
-  }
 
-  // RDD with the map structure: word => probability the word occurs (or not) in an email of a given class.
-  def probaWordClass(word:String,clase:String,filesDir:String): (RDD[(String, Double)]) = {
-    // compute the probaOccurs for clase emails
 
   }
+
 
   def main(args: Array[String]) {
     if(args.length>0)
@@ -46,12 +43,16 @@ object spamFilter {
     else
       println("You should provide a directory path ")
 
-  // Code to complete...
     //val conf = new SparkConf().setAppName("Spam Filter Application")
     val conf = new SparkConf().setMaster("local").setAppName("Spam Filter Application")
     val sc = new SparkContext(conf)
     val (probaW, nbFiles)= probaWordDir(sc)(args(0))
-    val probaWC // RDD with the map structure: word => probability the word occurs (or not) in an email of a given class.
+    // Compute the couples (probaWordHam, nbFilesHam) for the directory “ham” and (probaWordSpam, nbFilesSpam) for the directory “spam”
+    val (probaWordH,nbFilesH) = (probaWordDir(sc)(args(0).concat( "/" + "ham")))
+    val (probaWordS,nbFilesS) = (probaWordDir(sc)(args(0).concat( "/" + "spam")))
+    //Compute the probability P(occurs, class) for each word.
+    val probaWC = (probaWordH,probaWordS,probaWordH.map(x => (x._1,1-x._2)),probaWordS.map(x => (x._1,1-x._2)))
+    // RDD with the map structure: word => probability the word occurs (or not) in an email of a given class.
     val probaC  // the probability that an email belongs to the given class.
     computeMutualInformationFactor(probaWC,probaW,probaC,10) // the last is a default value
 
