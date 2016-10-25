@@ -1,7 +1,8 @@
 // spamFilter.scala
 
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{SparkConf,SparkContext}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.RDD._
 
 object spamFilter {
 
@@ -17,9 +18,8 @@ object spamFilter {
     // Each text file must be splitted into a set of unique words (if a word occurs several times, it is saved only one time in the set).
     val wordBagRdd: RDD[(String,Set[String])] = rdd.map(textTuple => (textTuple._1,textTuple._2.split(" ").toSet.diff(stopWords)))
     // Get the Number of occurrences amongst all files
-    val wordCountRdd = wordBagRdd.flatMap(x => x._2.flatMap(x=> (x,1)))
-    val probaWord :RDD[(String, Double)] = null
-    //val probaWord :RDD[(String, Double)] =sc.parallelize(listOfWords.map(x => (x, (dfCalc(x, files) / nbFiles).toDouble)).toSeq)
+    val wordCountRdd: RDD[(String,Int)] = wordBagRdd.flatMap(x => x._2.map( y => ( y ,1) ) ).reduceByKey(_+_)
+    val probaWord :RDD[(String, Double)] = wordCountRdd.map(x => ( x._1,x._2.toDouble/nbFiles))
     (probaWord, nbFiles)
   }
 
