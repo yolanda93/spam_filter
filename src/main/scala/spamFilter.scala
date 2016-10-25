@@ -6,7 +6,7 @@ import org.apache.spark.rdd.RDD._
 
 object spamFilter {
 
-
+  // /tmp/ling-spam/spam/
   def probaWordDir(sc:SparkContext)(filesDir:String) :(RDD[(String, Double)], Long) = {
     println("Call to probaWordDir with args" + filesDir)
     // wholeTextFiles get back a pair RDD where the key is the name of the input file.
