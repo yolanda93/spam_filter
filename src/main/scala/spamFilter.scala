@@ -8,20 +8,37 @@ object spamFilter {
 
   def probaWordDir(sc:SparkContext)(filesDir:String) :(RDD[(String, Double)], Long) = {
     println("Call to probaWordDir with args" + filesDir)
-    // This function reads all the text files within a directory
-    // wholeTextFiles get back a pair RDD where the key is the name of the input file.
-    val files  = sc.wholeTextFiles("/" + filesDir + "/*.txt").collect.toList.map(x => x._1)
-    // The number of files is counted and stored in a variable nbFiles
+    // a. This function reads all the text files within a directory
+    // wholeTextFiles get back a pair RDD where the key is the name of the input file. 
+    val filesSpam = sc.wholeTextFiles("/" + filesDir + "/spam/*.txt").collect.toList
+    val filesHam = sc.wholeTextFiles("/" + filesDir + "/ham/*.txt").collect.toList
+    
+    val files = filesHam ::: filesSpam
+
+    // b. The number of files is counted and stored in a variable nbFiles
     val nbFiles = files.size
-    // Each text file must be splitted into a set of unique words (if a word occurs several times, it is saved only one time in the set).
-    // toSet is used to remove duplicate words. listOfWords is the set of unique words
-    var listOfWords = files.flatMap(x => (sc.textFile(x).flatMap(_.split("\\s+"))).collect.toSet.toList).toSet
-    // Non informative words must be removed from the set of unique words. The list of non-informative words is ".", ":", ",", " ", "/", "\", "-", "'", "(", ")", "@"
-    listOfWords = listOfWords - (".", ":", ",", " ", "/", "/", "-", "'","(", ")", "@")
-    // read each file in fileStrings and for the word returns the number of files in which occurs in the directory
-    def dfCalc(t:String, D: List[String]): Int = D.flatMap(x => sc.textFile(x).flatMap(_.split("\\s+")).filter(x => x==t).collect.toSet).count(x => x.size>0)
+    
+    // d. Non informative words must be removed from the set of unique words. The list of non-informative words is ".", ":", ",", " ", "/", "\", "-", "'", "(", ")", "@"
+    // Map uses a function that is aplied to each element of the list. Flat map flats the list, removing nested lists (only one list with all elements)
+    var nolistOfWords = List(".", ":", ",", " ", "/", "/", "-", "'","(", ")", "@")
+    var listOfWordsSpam = filesSpam.flatMap(x => x._2.split("\\s+")).filterNot(x => nolistOfWords.contains(x))
+    var listOfWordsHam = filesHam.flatMap(x => x._2.split("\\s+")).filterNot(x => nolistOfWords.contains(x))
+
+    val listOfWords = listOfWordsHam ::: listOfWordsSpam
+
+    // c. Each text file must be splitted into a set of unique words (if a word occurs several times, it is saved only one time in the set).
+    // ListVar.distint is used to remove duplicate instances. Unlike toSet.toList .distint preserves the previous order.
+    //var listOfUniqueWordsSpam = listOfWordsSpam.distinct
+    //var listOfUniqueWordsHam = listOfWordsSpam.distinct
+    //var listOfUniqueWords = listOfUniqueWordsHam ::: listOfUniqueWordsSpam
+
+    // e. read each file in fileStrings and for the word returns the number of files in which occurs in the directory. 
+    // In a Map structure
+    var mapOfWords = listOfWords.groupBy(x => x).map(x._1, (x._2.size).toFloat/nbFiles))
+
+    
     // map structure: word => number of occurrences (files) of this word
-    val probaWord :RDD[(String, Double)] =sc.parallelize(listOfWords.map(x => (x, (dfCalc(x, files) / nbFiles).toDouble)).toSeq)
+    val probaWord :RDD[(String, Double)] =sc.parallelize(mapOfWords.toSeq)
     (probaWord, nbFiles)
   }
 
