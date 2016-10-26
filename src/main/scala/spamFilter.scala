@@ -1,4 +1,3 @@
-// spamFilter.scala
 import org.apache.spark.rdd.RDD._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkConf
@@ -31,7 +30,9 @@ object spamFilter {
     probaC: Double,
     probaDefault: Double // default value when a probability is missing
   ):RDD[(String, Double)] = {
-    val probWJoin : RDD[(String,(Option[Double],Option[Double]))]  = probaW.fullOuterJoin(probaWC)
+
+
+    val probWJoin : RDD[(String,(Option[Double],Option[Double]))]  = probaWC.fullOuterJoin(probaW)
     probWJoin.map(x=>(x._1,x._2._1.get*math.log(x._2._1.get/(x._2._2.get*probaC))))
   }
 
@@ -54,14 +55,15 @@ object spamFilter {
     val probaWC = (probaWordH,probaWordS,probaWordH.map(x => (x._1,1-x._2)),probaWordS.map(x => (x._1,1-x._2)))
     val probaH = nbFilesH/nbFiles // the probability that an email belongs to the given class.
     val probaS = nbFilesS/nbFiles
+
+
     // Compute mutual information for each class and occurs
     var mutualInfH = computeMutualInformationFactor(probaWC._1,probaW,probaH,0.2/nbFiles) // the last is a default value
     var mutualInfS = computeMutualInformationFactor(probaWC._2,probaW,probaS,0.2/nbFiles)
     var mutualInfNh = computeMutualInformationFactor(probaWC._3,probaW,probaH,0.2/nbFiles)
     var mutualInfNs = computeMutualInformationFactor(probaWC._4,probaW,probaS,0.2/nbFiles)
-
     //compute the mutual information of each word as a RDD with the map structure: word => MI(word).
-    
+
 
     /*var listOfWords = extractListOfWords(sc)(args(0))
     var mutualInfoW : RDD[(String,Double)]= listOfWords.map(x=>)*/
