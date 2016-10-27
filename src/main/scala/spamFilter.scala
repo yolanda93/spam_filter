@@ -32,15 +32,16 @@ object spamFilter {
   ):RDD[(String, Double)] = {
 
 
-    val probWJoin : RDD[(String,(Option[Double],Option[Double]))]  = probaWC.fullOuterJoin(probaW)
-    probWJoin.map(x=>(x._1,x._2._1.get*math.log(x._2._1.get/(x._2._2.get*probaC))))
+   val probWJoin : RDD[(String,(Option[Double],Option[Double]))]  = probaWC.fullOuterJoin(probaW)
+  //  probWJoin.map(x=>(x._1,x._2._1.get*math.log(x._2._1.get/(x._2._2.get*probaC)))).getOrElse(x._1,probaDefault),getOrElse(x._1,probaDefault))
+    val valueClassAndOcurrence = probWJoin.map(x =>(x._1, (x._2._1.getOrElse(probaDefault), x._2._2.getOrElse(probaDefault)))))
+    sc.parallelize(valueClassAndOcurrence.map(x => (x._1, x._2._1*math.log(x._2._1/(x._2._2*probaC)))))
   }
 
 
   def main(args: Array[String]) {
     if(args.length>0)
       println("Started Spam Filter with arg = " + args(0))
-    else
       println("You should provide a directory path ")
 
     //val conf = new SparkConf().setAppName("Spam Filter Application")
