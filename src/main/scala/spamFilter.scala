@@ -53,20 +53,17 @@ object spamFilter {
     val probaWC = (probaWordH,probaWordS,probaWordH.map(x => (x._1,1-x._2)),probaWordS.map(x => (x._1,1-x._2)))
     val probaH = nbFilesH/nbFiles // the probability that an email belongs to the given class.
     val probaS = nbFilesS/nbFiles
-    
     // Compute mutual information for each class and occurs
-    var mutualInfH = computeMutualInformationFactor(probaWC._1,probaW,probaH,0.2/nbFiles) // the last is a default value
-    var mutualInfS = computeMutualInformationFactor(probaWC._2,probaW,probaS,0.2/nbFiles)
-    var mutualInfNh = computeMutualInformationFactor(probaWC._3,probaW,probaH,0.2/nbFiles)
-    var mutualInfNs = computeMutualInformationFactor(probaWC._4,probaW,probaS,0.2/nbFiles)
-    //compute the mutual information of each word as a RDD with the map structure: word => MI(word).
-
-
-    /*var listOfWords = extractListOfWords(sc)(args(0))
-    var mutualInfoW : RDD[(String,Double)]= listOfWords.map(x=>)*/
-
+    var MITrueHam = computeMutualInformationFactor(probaWC._1,probaW,probaH,0.2/nbFiles) // the last is a default value
+    var MITrueSpam = computeMutualInformationFactor(probaWC._2,probaW,probaS,0.2/nbFiles)
+    var MIFalseHam = computeMutualInformationFactor(probaWC._3,probaW,probaH,0.2/nbFiles)
+    var MIFalseSpam = computeMutualInformationFactor(probaWC._4,probaW,probaS,0.2/nbFiles)
+    //compute the mutual information of each word as a RDD with the map structure: word => MI(word)
+    var MI :RDD[(String, Double)] = MITrueHam.union(MITrueSpam).union(MIFalseHam).union(MIFalseSpam).reduceByKey( (x, y) => x + y)
+    // print on screen the 10 top words (maximizing the mutual information value)
     //These words must be also stored on HDFS in the file “/tmp/topWords.txt”.
-
+    var path : String = "/tmp/topWords.txt"
+    sc.parallelize(MI.sortBy(_._2).takeOrdered(10)).keys.saveAsTextFile(path)
   }
 
 } // end of spamFilter 
