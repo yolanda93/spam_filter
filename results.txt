@@ -1,0 +1,26 @@
+Using:
+hdfs dfs -copyToLocal /tmp/topWords.txt /root/topWords.txt
+cat /root/topWords.txt/*
+
+Subject:
+passively
+punitive
+90036
+beleive
+ving
+slap
+troubleshoot
+954
+3sd
+
+#Using only the (true, ham), (true, spam):
+!
+Subject:
+free
+our
+remove
+$
+mail
+money
+com
+day
